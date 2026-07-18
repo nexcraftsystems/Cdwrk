@@ -1,0 +1,6 @@
+{
+  "name": "CodWorking",
+  "description": "Bespoke software builders and premium rebranding hub with a Liquid Glass aesthetic, utilizing deep black backgrounds, high-contrast typography, and video-heavy backdrops.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
