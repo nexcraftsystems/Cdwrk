@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Language, TranslationSchema } from '../translations';
 import { Project } from './RelatedWork';
+import CodWorkingLogo from './CodWorkingLogo';
 import { 
   fetchWaitlistEntries, 
   deleteWaitlistEntry, 
@@ -73,8 +74,48 @@ export default function DeveloperWorkspace({ language, t, onBackToHome }: Develo
     return localStorage.getItem('digitize_dev_email') || '';
   });
   
-  const [activeTab, setActiveTab] = useState<'crm' | 'portfolio' | 'socials'>('crm');
+  const [activeTab, setActiveTab] = useState<'crm' | 'portfolio' | 'socials' | 'branding'>('crm');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Logo upload handling state & helpers
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  const handleLogoFile = (file: File) => {
+    setLogoError(null);
+
+    // Validate is image
+    if (!file.type.startsWith('image/')) {
+      setLogoError(language === 'en' ? 'Error: Only image files are accepted.' : 'Ralat: Hanya fail imej yang diterima.');
+      return;
+    }
+
+    // Validate size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError(language === 'en' ? 'Error: Image size must be less than 2MB.' : 'Ralat: Saiz imej mestilah kurang daripada 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        try {
+          localStorage.setItem('custom_logo_data_url', reader.result);
+          // Dispatch custom event to update same-page components instantly
+          window.dispatchEvent(new Event('custom_logo_updated'));
+          setToastMessage(language === 'en' ? 'Custom logo uploaded successfully!' : 'Logo tersuai berjaya dimuat naik!');
+          setShowAuthToast(true);
+          setTimeout(() => setShowAuthToast(false), 3000);
+        } catch (e) {
+          console.error(e);
+          setLogoError(language === 'en' ? 'Error: Local storage limit exceeded. Please upload a smaller image file.' : 'Ralat: Had simpanan tempatan melebihi. Sila muat naik imej yang lebih kecil.');
+        }
+      }
+    };
+    reader.onerror = () => {
+      setLogoError(language === 'en' ? 'Error reading file.' : 'Ralat ketika membaca fail.');
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Social Links State
   const [socialLinks, setSocialLinks] = useState<SocialLinks>(() => {
@@ -640,6 +681,21 @@ export default function DeveloperWorkspace({ language, t, onBackToHome }: Develo
                   >
                     <Share2 className="w-4.5 h-4.5" />
                     <span>SOCIAL MEDIA LINKS</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setActiveTab('branding');
+                      setIsSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left text-xs font-mono tracking-wide transition-all cursor-pointer ${
+                      activeTab === 'branding' 
+                        ? 'bg-white text-black font-bold border-white shadow-xl' 
+                        : 'bg-white/[0.01] border-white/5 hover:bg-white/5 hover:border-white/10 text-white/60 hover:text-white'
+                    }`}
+                  >
+                    <Image className="w-4.5 h-4.5" />
+                    <span>BRANDING & LOGO</span>
                   </button>
                 </div>
               </div>
@@ -1396,6 +1452,116 @@ export default function DeveloperWorkspace({ language, t, onBackToHome }: Develo
                       </button>
                     </div>
                   </form>
+                </div>
+              )}
+
+              {/* BRANDING & LOGO MANAGEMENT VIEW */}
+              {activeTab === 'branding' && (
+                <div className="liquid-glass border border-white/5 rounded-3xl p-6 md:p-8 backdrop-blur-2xl shadow-3xl overflow-hidden relative">
+                  <div>
+                    <span className="text-[10px] font-mono tracking-widest text-emerald-500 uppercase bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/10">
+                      BRANDING CONTROL CENTER
+                    </span>
+                    <h3 className="text-xl font-serif italic text-white tracking-tight mt-3">
+                      {language === 'en' ? 'Custom Logo Branding' : 'Penjenamaan Logo Tersuai'}
+                    </h3>
+                    <p className="text-white/40 text-xs font-light mt-1">
+                      {language === 'en' 
+                        ? 'Upload a custom logo image (PNG, JPEG, SVG, WebP) to dynamically represent your bespoke agency branding across the system.' 
+                        : 'Muat naik imej logo tersuai (PNG, JPEG, SVG, WebP) untuk memaparkan jenama khas anda secara dinamik di seluruh sistem.'}
+                    </p>
+                  </div>
+
+                  <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Upload / Drag-and-Drop Form (Left side) */}
+                    <div className="lg:col-span-7 flex flex-col gap-6">
+                      <div 
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) {
+                            handleLogoFile(file);
+                          }
+                        }}
+                        className="border-2 border-dashed border-white/10 hover:border-white/25 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-white/[0.01] hover:bg-white/[0.03] transition-all cursor-pointer group relative overflow-hidden h-52"
+                      >
+                        <input
+                          type="file"
+                          id="logo-upload"
+                          accept="image/*"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleLogoFile(file);
+                            }
+                          }}
+                        />
+                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform mb-4 border border-white/5">
+                          <Image className="w-5 h-5 text-white/60 group-hover:text-white" />
+                        </div>
+                        <span className="text-xs font-mono font-medium text-white/90">
+                          {language === 'en' ? 'Drag and drop your logo file' : 'Heret dan lepaskan fail logo anda'}
+                        </span>
+                        <span className="text-[10px] text-white/40 mt-1 uppercase font-mono">
+                          {language === 'en' ? 'or click to browse local files' : 'atau klik untuk memilih fail tempatan'}
+                        </span>
+                        <span className="text-[9px] text-white/20 mt-4 font-mono tracking-wider">
+                          PNG, JPEG, WebP, SVG (MAX 2MB)
+                        </span>
+                      </div>
+
+                      {logoError && (
+                        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-[11px] font-mono text-red-400 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                          <span>{logoError}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Logo Preview & Reset (Right side) */}
+                    <div className="lg:col-span-5 bg-white/[0.02] border border-white/5 rounded-2xl p-6 flex flex-col gap-6">
+                      <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest">
+                        Active Brand Preview
+                      </span>
+
+                      <div className="h-32 rounded-xl bg-[#030303] border border-white/5 flex items-center justify-center p-4 relative overflow-hidden group">
+                        {/* Chess / Grid pattern background to check transparent logos */}
+                        <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+                        
+                        <div className="z-10 flex flex-col items-center gap-3">
+                          <CodWorkingLogo size={36} showText={false} />
+                          <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">
+                            {localStorage.getItem('custom_logo_data_url') ? (language === 'en' ? 'Custom Uploaded' : 'Tersuai Dimuat Naik') : (language === 'en' ? 'Default Outline' : 'Rangka Asal')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(language === 'en' ? 'Reset the logo to our default bespoke outline design?' : 'Tetapkan semula logo ke reka bentuk rangka asal?')) {
+                              localStorage.removeItem('custom_logo_data_url');
+                              // Dispatch custom event to trigger update on the same page
+                              window.dispatchEvent(new Event('custom_logo_updated'));
+                              setToastMessage(language === 'en' ? 'Logo reset to default configuration!' : 'Logo ditetapkan semula ke konfigurasi asal!');
+                              setShowAuthToast(true);
+                              setTimeout(() => setShowAuthToast(false), 3000);
+                            }
+                          }}
+                          className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 text-xs font-semibold tracking-wider uppercase transition-all cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <span>{language === 'en' ? 'Reset Default Logo' : 'Reset Logo Asal'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
