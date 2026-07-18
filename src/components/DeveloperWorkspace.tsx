@@ -117,6 +117,25 @@ export default function DeveloperWorkspace({ language, t, onBackToHome }: Develo
     reader.readAsDataURL(file);
   };
 
+  // Logo sizes state
+  const [logoSizeHeader, setLogoSizeHeader] = useState<number>(() => {
+    const stored = localStorage.getItem('logo_size_header');
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 20; // default header
+  });
+
+  const [logoSizeFooter, setLogoSizeFooter] = useState<number>(() => {
+    const stored = localStorage.getItem('logo_size_footer');
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 32; // default footer (made a bit bigger)
+  });
+
   // Social Links State
   const [socialLinks, setSocialLinks] = useState<SocialLinks>(() => {
     const stored = localStorage.getItem('digitize_social_links');
@@ -1546,10 +1565,15 @@ export default function DeveloperWorkspace({ language, t, onBackToHome }: Develo
                         <button
                           type="button"
                           onClick={() => {
-                            if (confirm(language === 'en' ? 'Reset the logo to our default bespoke outline design?' : 'Tetapkan semula logo ke reka bentuk rangka asal?')) {
+                            if (confirm(language === 'en' ? 'Reset the logo and dimension sizes to our default configuration?' : 'Tetapkan semula logo dan saiz dimensi ke konfigurasi asal?')) {
                               localStorage.removeItem('custom_logo_data_url');
-                              // Dispatch custom event to trigger update on the same page
+                              localStorage.removeItem('logo_size_header');
+                              localStorage.removeItem('logo_size_footer');
+                              setLogoSizeHeader(20);
+                              setLogoSizeFooter(32);
+                              // Dispatch custom events to trigger updates on the same page
                               window.dispatchEvent(new Event('custom_logo_updated'));
+                              window.dispatchEvent(new Event('logo_sizes_updated'));
                               setToastMessage(language === 'en' ? 'Logo reset to default configuration!' : 'Logo ditetapkan semula ke konfigurasi asal!');
                               setShowAuthToast(true);
                               setTimeout(() => setShowAuthToast(false), 3000);
@@ -1560,6 +1584,94 @@ export default function DeveloperWorkspace({ language, t, onBackToHome }: Develo
                           <span>{language === 'en' ? 'Reset Default Logo' : 'Reset Logo Asal'}</span>
                         </button>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* LOGO SIZE CONTROLS */}
+                  <div className="mt-8 pt-8 border-t border-white/5">
+                    <h4 className="text-sm font-mono tracking-wider text-white uppercase mb-4">
+                      {language === 'en' ? 'Logo Dimension Controller' : 'Pengawal Dimensi Logo'}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white/[0.01] border border-white/5 rounded-2xl p-6">
+                      {/* Header Logo Slider */}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-mono text-white/70 uppercase">
+                            {language === 'en' ? 'Header Logo Size' : 'Saiz Logo Pengepala'}
+                          </label>
+                          <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">
+                            {logoSizeHeader}px
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="12"
+                          max="48"
+                          value={logoSizeHeader}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            setLogoSizeHeader(val);
+                            // Update localStorage dynamically on drag, and dispatch update event
+                            localStorage.setItem('logo_size_header', val.toString());
+                            window.dispatchEvent(new Event('logo_sizes_updated'));
+                          }}
+                          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
+                        />
+                        <span className="text-[10px] text-white/30 font-sans">
+                          {language === 'en' 
+                            ? 'Adjust logo height in the top navigation bar (Default: 20px).' 
+                            : 'Laraskan ketinggian logo di bar navigasi atas (Asal: 20px).'}
+                        </span>
+                      </div>
+
+                      {/* Footer Logo Slider */}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-mono text-white/70 uppercase">
+                            {language === 'en' ? 'Footer Logo Size' : 'Saiz Logo Kaki Laman'}
+                          </label>
+                          <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">
+                            {logoSizeFooter}px
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="16"
+                          max="64"
+                          value={logoSizeFooter}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            setLogoSizeFooter(val);
+                            // Update localStorage dynamically on drag, and dispatch update event
+                            localStorage.setItem('logo_size_footer', val.toString());
+                            window.dispatchEvent(new Event('logo_sizes_updated'));
+                          }}
+                          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
+                        />
+                        <span className="text-[10px] text-white/30 font-sans">
+                          {language === 'en' 
+                            ? 'Adjust logo height in the bottom footer navigation (Default: 32px).' 
+                            : 'Laraskan ketinggian logo di bahagian kaki laman (Asal: 32px).'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Save Button for Logo Sizes */}
+                    <div className="mt-6 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          localStorage.setItem('logo_size_header', logoSizeHeader.toString());
+                          localStorage.setItem('logo_size_footer', logoSizeFooter.toString());
+                          window.dispatchEvent(new Event('logo_sizes_updated'));
+                          setToastMessage(language === 'en' ? 'Logo dimensions saved successfully!' : 'Dimensi logo berjaya disimpan!');
+                          setShowAuthToast(true);
+                          setTimeout(() => setShowAuthToast(false), 3000);
+                        }}
+                        className="px-6 py-3 rounded-xl bg-white text-black hover:bg-white/90 text-xs font-bold tracking-wider uppercase transition-all duration-300 shadow-xl cursor-pointer flex items-center gap-2"
+                      >
+                        <span>{language === 'en' ? 'Save Dimension Settings' : 'Simpan Tetapan Dimensi'}</span>
+                      </button>
                     </div>
                   </div>
                 </div>

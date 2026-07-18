@@ -4,20 +4,58 @@ interface CodWorkingLogoProps {
   className?: string;
   size?: number;
   showText?: boolean;
+  variant?: 'header' | 'footer' | 'default';
 }
 
-export default function CodWorkingLogo({ className = '', size = 32, showText = false }: CodWorkingLogoProps) {
+export default function CodWorkingLogo({ className = '', size, showText = false, variant = 'default' }: CodWorkingLogoProps) {
   const [customLogo, setCustomLogo] = useState<string | null>(() => {
     return localStorage.getItem('custom_logo_data_url');
+  });
+
+  const [logoSize, setLogoSize] = useState<number>(() => {
+    if (size !== undefined) return size;
+    const stored = variant === 'header' 
+      ? localStorage.getItem('logo_size_header') 
+      : variant === 'footer' 
+        ? localStorage.getItem('logo_size_footer') 
+        : null;
+    if (stored) {
+      const parsed = parseInt(stored, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+    if (variant === 'header') return 20;
+    if (variant === 'footer') return 32; // "a bit bigger" as default
+    return 32;
   });
 
   useEffect(() => {
     const handleLogoUpdate = () => {
       setCustomLogo(localStorage.getItem('custom_logo_data_url'));
+      
+      if (size === undefined) {
+        const stored = variant === 'header' 
+          ? localStorage.getItem('logo_size_header') 
+          : variant === 'footer' 
+            ? localStorage.getItem('logo_size_footer') 
+            : null;
+        if (stored) {
+          const parsed = parseInt(stored, 10);
+          if (!isNaN(parsed)) {
+            setLogoSize(parsed);
+            return;
+          }
+        }
+        if (variant === 'header') setLogoSize(20);
+        else if (variant === 'footer') setLogoSize(32);
+        else setLogoSize(32);
+      } else {
+        setLogoSize(size);
+      }
     };
 
     window.addEventListener('storage', handleLogoUpdate);
     window.addEventListener('custom_logo_updated', handleLogoUpdate);
+    window.addEventListener('logo_sizes_updated', handleLogoUpdate);
     
     // Fallback interval to catch same-page updates instantly
     const interval = setInterval(handleLogoUpdate, 1000);
@@ -25,9 +63,10 @@ export default function CodWorkingLogo({ className = '', size = 32, showText = f
     return () => {
       window.removeEventListener('storage', handleLogoUpdate);
       window.removeEventListener('custom_logo_updated', handleLogoUpdate);
+      window.removeEventListener('logo_sizes_updated', handleLogoUpdate);
       clearInterval(interval);
     };
-  }, []);
+  }, [variant, size]);
 
   return (
     <div className={`flex items-center gap-3.5 select-none ${className}`} id="codworking-logo">
@@ -36,14 +75,14 @@ export default function CodWorkingLogo({ className = '', size = 32, showText = f
           <img 
             src={customLogo} 
             alt="CodWorking Custom Logo" 
-            style={{ height: `${size}px`, width: 'auto' }}
+            style={{ height: `${logoSize}px`, width: 'auto' }}
             className="object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.25)] transition-all duration-500 hover:scale-[1.03]"
             referrerPolicy="no-referrer"
           />
         ) : (
           <svg 
-            width={size * 2} 
-            height={size} 
+            width={logoSize * 2} 
+            height={logoSize} 
             viewBox="0 0 120 60" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg"

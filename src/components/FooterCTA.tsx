@@ -512,7 +512,7 @@ export default function FooterCTA({ country, setCountry, language, t, setCurrent
       <footer className="w-full bg-black border-t border-white/10 relative z-20 py-16 px-6 md:px-12 flex flex-col items-center mt-12 rounded-t-[2.5rem] md:rounded-t-[4rem] overflow-hidden">
         <div className="w-full max-w-7xl flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col gap-2.5 items-center md:items-start text-center md:text-left">
-            <CodWorkingLogo size={22} showText={false} />
+            <CodWorkingLogo variant="footer" showText={false} />
             <div className="text-[11px] font-mono uppercase tracking-widest text-white/50 mt-1.5">
               Founder: <span className="text-white font-medium">Wan Zaim</span>
             </div>

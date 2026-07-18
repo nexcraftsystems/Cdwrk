@@ -75,7 +75,7 @@ export default function Navbar({
               }
             }}
           >
-            <CodWorkingLogo size={20} showText={false} />
+            <CodWorkingLogo variant="header" showText={false} />
           </motion.div>
 
           {/* Desktop Links - Center */}
